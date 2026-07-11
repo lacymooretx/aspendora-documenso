@@ -176,6 +176,7 @@ export const resendDocument = async ({ id, userId, recipients, teamId, requestMe
     claims,
     emailsDisabled,
     emailTransport,
+    baseUrl,
   } = await getEmailContext({
     emailType: 'RECIPIENT',
     source: {
@@ -238,9 +239,10 @@ export const resendDocument = async ({ id, userId, recipients, teamId, requestMe
         'document.name': envelope.title,
       };
 
+      // assetBaseUrl stays canonical (email images); signer links use the org's baseUrl.
       const assetBaseUrl = NEXT_PUBLIC_WEBAPP_URL() || 'http://localhost:3000';
-      const signDocumentLink = `${NEXT_PUBLIC_WEBAPP_URL()}/sign/${recipient.token}`;
-      const reportUrl = `${NEXT_PUBLIC_WEBAPP_URL()}/report/${recipient.token}`;
+      const signDocumentLink = `${baseUrl}/sign/${recipient.token}`;
+      const reportUrl = `${baseUrl}/report/${recipient.token}`;
 
       const template = createElement(DocumentInviteEmailTemplate, {
         documentName: envelope.title,

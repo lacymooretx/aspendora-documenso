@@ -127,6 +127,8 @@ export const generateDefaultOrganisationSettings = (): Omit<OrganisationGlobalSe
     brandingColors: null,
     brandingCss: '',
 
+    customSigningDomain: null,
+
     emailId: null,
     emailReplyTo: null,
     // emailReplyToName: null,

@@ -100,6 +100,7 @@ export const run = async ({ payload, io }: { payload: TSendSigningEmailJobDefini
     claims,
     emailsDisabled,
     emailTransport,
+    baseUrl,
   } = await getEmailContext({
     emailType: 'RECIPIENT',
     source: {
@@ -164,9 +165,12 @@ export const run = async ({ payload, io }: { payload: TSendSigningEmailJobDefini
     'document.name': envelope.title,
   };
 
+  // assetBaseUrl stays on the canonical webapp URL so email logo/asset images always
+  // load from the primary host. Signer links use the org's resolved baseUrl (custom
+  // signing domain when configured).
   const assetBaseUrl = NEXT_PUBLIC_WEBAPP_URL() || 'http://localhost:3000';
-  const signDocumentLink = `${NEXT_PUBLIC_WEBAPP_URL()}/sign/${recipient.token}`;
-  const reportUrl = `${NEXT_PUBLIC_WEBAPP_URL()}/report/${recipient.token}`;
+  const signDocumentLink = `${baseUrl}/sign/${recipient.token}`;
+  const reportUrl = `${baseUrl}/report/${recipient.token}`;
 
   const template = createElement(DocumentInviteEmailTemplate, {
     documentName: envelope.title,

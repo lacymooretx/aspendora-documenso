@@ -16,6 +16,7 @@ import { IS_BILLING_ENABLED } from '../../constants/app';
 import { DOCUMENSO_INTERNAL_EMAIL } from '../../constants/email';
 import { AppError, AppErrorCode } from '../../errors/app-error';
 import { logger } from '../../utils/logger';
+import { resolveSigningBaseUrl } from '../../utils/signing-domain';
 import {
   organisationGlobalSettingsToBranding,
   teamGlobalSettingsToBranding,
@@ -86,12 +87,22 @@ export type EmailContextResponse = {
   };
   replyToEmail: string | undefined;
   emailLanguage: string;
+  /**
+   * The base URL for signer-facing links (sign / report / completion download) for
+   * this organisation. Resolves to the org's custom signing domain when configured,
+   * otherwise the global `NEXT_PUBLIC_WEBAPP_URL`. Do NOT use this for internal owner
+   * dashboard links or email asset URLs — those stay on the canonical webapp URL.
+   */
+  baseUrl: string;
 };
 
 export const getEmailContext = async (options: GetEmailContextOptions): Promise<EmailContextResponse> => {
   const { source, meta } = options;
 
-  let emailContext: Omit<EmailContextResponse, 'senderEmail' | 'replyToEmail' | 'emailLanguage' | 'emailTransport'>;
+  let emailContext: Omit<
+    EmailContextResponse,
+    'senderEmail' | 'replyToEmail' | 'emailLanguage' | 'emailTransport' | 'baseUrl'
+  >;
 
   if (source.type === 'organisation') {
     emailContext = await handleOrganisationEmailContext(source.organisationId);
@@ -100,6 +111,12 @@ export const getEmailContext = async (options: GetEmailContextOptions): Promise<
   }
 
   const emailLanguage = meta?.language || emailContext.settings.documentLanguage;
+
+  // Signer-facing links use the organisation's custom signing domain when set, so a
+  // single instance can emit links on multiple vanity domains. Falls back to the
+  // global webapp URL. For team sources this value is inherited/overridden through
+  // extractDerivedTeamSettings, so reading emailContext.settings works for both.
+  const baseUrl = resolveSigningBaseUrl(emailContext.settings.customSigningDomain);
 
   const transportResolution = emailContext.claims.emailTransportId
     ? await resolveEmailTransport(emailContext.claims.emailTransportId)
@@ -139,6 +156,7 @@ export const getEmailContext = async (options: GetEmailContextOptions): Promise<
       },
       replyToEmail: undefined,
       emailLanguage,
+      baseUrl,
     };
   }
 
@@ -169,6 +187,7 @@ export const getEmailContext = async (options: GetEmailContextOptions): Promise<
       },
       replyToEmail,
       emailLanguage,
+      baseUrl,
     };
   }
 
@@ -182,6 +201,7 @@ export const getEmailContext = async (options: GetEmailContextOptions): Promise<
     },
     replyToEmail,
     emailLanguage,
+    baseUrl,
   };
 };
 

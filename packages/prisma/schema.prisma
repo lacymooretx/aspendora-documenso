@@ -986,6 +986,12 @@ model OrganisationGlobalSettings {
   brandingColors         Json? /// [TCssVarsSchema] @zod.custom.use(ZCssVarsSchema)
   brandingCss            String  @default("")
 
+  // Custom signing domain — when set, signer-facing links (sign / report / completion
+  // download) for this organisation's documents are emitted on this vanity domain
+  // instead of the global NEXT_PUBLIC_WEBAPP_URL. Lets a single instance serve multiple
+  // signing domains. Stored as a full origin, e.g. "https://sign.example.com".
+  customSigningDomain String?
+
   envelopeExpirationPeriod Json? /// [EnvelopeExpirationPeriod] @zod.custom.use(ZEnvelopeExpirationPeriodSchema)
 
   reminderSettings Json? /// [EnvelopeReminderSettings] @zod.custom.use(ZEnvelopeReminderSettingsSchema)
@@ -1028,6 +1034,9 @@ model TeamGlobalSettings {
   brandingCompanyDetails String?
   brandingColors         Json? /// [TCssVarsSchema] @zod.custom.use(ZCssVarsSchema)
   brandingCss            String?
+
+  // Team-level override of the organisation custom signing domain (null = inherit org).
+  customSigningDomain String?
 
   envelopeExpirationPeriod Json? /// [EnvelopeExpirationPeriod] @zod.custom.use(ZEnvelopeExpirationPeriodSchema)
 

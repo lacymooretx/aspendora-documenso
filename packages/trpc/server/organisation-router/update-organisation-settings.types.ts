@@ -3,6 +3,7 @@ import { ZEnvelopeExpirationPeriod } from '@documenso/lib/constants/envelope-exp
 import { ZEnvelopeReminderSettings } from '@documenso/lib/constants/envelope-reminder';
 import { SUPPORTED_LANGUAGE_CODES } from '@documenso/lib/constants/i18n';
 import { ZCssVarsSchema } from '@documenso/lib/types/css-vars';
+import { ZCustomSigningDomainSchema } from '@documenso/lib/types/custom-signing-domain';
 import { ZDefaultRecipientsSchema } from '@documenso/lib/types/default-recipients';
 import { ZDocumentEmailSettingsSchema } from '@documenso/lib/types/document-email';
 import { ZDocumentMetaDateFormatSchema, ZDocumentMetaTimezoneSchema } from '@documenso/lib/types/document-meta';
@@ -37,6 +38,10 @@ export const ZUpdateOrganisationSettingsRequestSchema = z.object({
     brandingCompanyDetails: z.string().optional(),
     brandingColors: ZCssVarsSchema.nullish(),
     brandingCss: z.string().max(BRANDING_CSS_MAX_LENGTH).optional(),
+
+    // Custom signing domain — vanity domain for this organisation's signer-facing
+    // links. `undefined` leaves it unchanged; `null`/empty clears it.
+    customSigningDomain: ZCustomSigningDomainSchema.nullish(),
 
     // Email related settings.
     emailId: z.string().nullish(),

@@ -112,6 +112,7 @@ export const run = async ({ payload, io }: { payload: TProcessSigningReminderJob
     claims,
     emailsDisabled,
     emailTransport,
+    baseUrl,
   } = await getEmailContext({
     emailType: 'RECIPIENT',
     source: {
@@ -155,9 +156,10 @@ export const run = async ({ payload, io }: { payload: TProcessSigningReminderJob
     ? renderCustomEmailTemplate(envelope.documentMeta.message, customEmailTemplate)
     : undefined;
 
+  // assetBaseUrl stays canonical (email images); signer links use the org's baseUrl.
   const assetBaseUrl = NEXT_PUBLIC_WEBAPP_URL() || 'http://localhost:3000';
-  const signDocumentLink = `${NEXT_PUBLIC_WEBAPP_URL()}/sign/${recipient.token}`;
-  const reportUrl = `${NEXT_PUBLIC_WEBAPP_URL()}/report/${recipient.token}`;
+  const signDocumentLink = `${baseUrl}/sign/${recipient.token}`;
+  const reportUrl = `${baseUrl}/report/${recipient.token}`;
 
   // Meter reminder emails against the organisation email quota/stats. Reminders
   // are unsolicited (the recipient didn't opt in to them) and can recur, so they

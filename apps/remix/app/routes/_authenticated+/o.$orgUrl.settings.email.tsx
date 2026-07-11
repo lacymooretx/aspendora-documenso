@@ -6,6 +6,7 @@ import { msg } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 
 import { EmailPreferencesForm, type TEmailPreferencesFormSchema } from '~/components/forms/email-preferences-form';
+import { OrganisationSigningDomainForm } from '~/components/forms/organisation-signing-domain-form';
 import { SettingsHeader } from '~/components/general/settings-header';
 import { appMetaTags } from '~/utils/meta';
 
@@ -52,6 +53,28 @@ export default function OrganisationSettingsGeneral() {
     }
   };
 
+  const onSigningDomainSubmit = async (customSigningDomain: string | null) => {
+    try {
+      await updateOrganisationSettings({
+        organisationId: organisation.id,
+        data: {
+          customSigningDomain,
+        },
+      });
+
+      toast({
+        title: t`Signing domain updated`,
+        description: t`Your custom signing domain has been updated`,
+      });
+    } catch {
+      toast({
+        title: t`Something went wrong!`,
+        description: t`We were unable to update your signing domain at this time, please try again later`,
+        variant: 'destructive',
+      });
+    }
+  };
+
   if (isLoadingOrganisation || !organisationWithSettings) {
     return <SpinnerBox />;
   }
@@ -65,6 +88,13 @@ export default function OrganisationSettingsGeneral() {
           canInherit={false}
           settings={organisationWithSettings.organisationGlobalSettings}
           onFormSubmit={onEmailPreferencesSubmit}
+        />
+      </section>
+
+      <section className="mt-8 border-t pt-8">
+        <OrganisationSigningDomainForm
+          customSigningDomain={organisationWithSettings.organisationGlobalSettings.customSigningDomain}
+          onFormSubmit={onSigningDomainSubmit}
         />
       </section>
     </div>

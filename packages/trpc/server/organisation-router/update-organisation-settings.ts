@@ -50,6 +50,9 @@ export const updateOrganisationSettingsRoute = authenticatedProcedure
       brandingColors,
       brandingCss,
 
+      // Custom signing domain.
+      customSigningDomain,
+
       // Email related settings.
       emailId,
       emailReplyTo,
@@ -179,6 +182,9 @@ export const updateOrganisationSettingsRoute = authenticatedProcedure
             brandingCompanyDetails,
             brandingColors: normalizedBrandingColors === null ? Prisma.DbNull : normalizedBrandingColors,
             brandingCss: sanitizedBrandingCss,
+
+            // Custom signing domain (undefined = unchanged, null = cleared).
+            customSigningDomain,
 
             // Email related settings.
             emailId,

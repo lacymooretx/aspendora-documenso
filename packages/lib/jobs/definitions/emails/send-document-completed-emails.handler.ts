@@ -66,15 +66,24 @@ export const run = async ({ payload, io }: { payload: TSendDocumentCompletedEmai
     throw new Error('Document has no recipients');
   }
 
-  const { branding, emailLanguage, senderEmail, replyToEmail, organisationId, claims, emailsDisabled, emailTransport } =
-    await getEmailContext({
-      emailType: 'RECIPIENT',
-      source: {
-        type: 'team',
-        teamId: envelope.teamId,
-      },
-      meta: envelope.documentMeta,
-    });
+  const {
+    branding,
+    emailLanguage,
+    senderEmail,
+    replyToEmail,
+    organisationId,
+    claims,
+    emailsDisabled,
+    emailTransport,
+    baseUrl,
+  } = await getEmailContext({
+    emailType: 'RECIPIENT',
+    source: {
+      type: 'team',
+      teamId: envelope.teamId,
+    },
+    meta: envelope.documentMeta,
+  });
 
   // Don't send completion emails if the organisation has email sending disabled or the owner is disabled (e.g. banned).
   if (envelope.user.disabled || emailsDisabled) {
@@ -209,9 +218,11 @@ export const run = async ({ payload, io }: { payload: TSendDocumentCompletedEmai
         'document.name': envelope.title,
       };
 
-      const downloadLink = `${NEXT_PUBLIC_WEBAPP_URL()}/sign/${recipient.token}/complete`;
-      const reportUrl =
-        recipient.role === RecipientRole.CC ? `${NEXT_PUBLIC_WEBAPP_URL()}/report/${recipient.token}` : undefined;
+      // Signer-facing links use the org's baseUrl (custom signing domain when set).
+      // The owner download link (documentOwnerDownloadLink) intentionally stays on the
+      // canonical webapp URL since owners access their dashboard on the primary host.
+      const downloadLink = `${baseUrl}/sign/${recipient.token}/complete`;
+      const reportUrl = recipient.role === RecipientRole.CC ? `${baseUrl}/report/${recipient.token}` : undefined;
 
       const template = createElement(DocumentCompletedEmailTemplate, {
         documentName: envelope.title,
