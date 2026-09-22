@@ -124,3 +124,44 @@ with approval gates (see progress doc).
 
 **Status:** implementation complete + verified (static). Ready to commit on the feature branch.
 Upstream PR is the user's call (upstream declared custom domains out of scope).
+
+---
+
+## 2026-07-11 — Production deploy (roll fork onto both instances, keep separate)
+
+**User decisions:** roll fork onto BOTH prod instances (keep separate, no consolidation yet); proceed now.
+
+**Pre-deploy safety checks (read-only, host docker-apps / <internal-ip>):**
+- Inventory: `documenso` (MSP, :8119) and `documenso-compliance` (:8128), both on stock
+  `documenso/documenso:latest`; shared `postgres:16-alpine`; DBs `documenso_db` +
+  `documenso_compliance_db`.
+- **Migration-state check (critical):** both prod DBs latest = `20260616120000_add_cancelled_document_status`.
+  Our fork adds `20260622120000_add_recipient_reminder_count` (upstream, additive) + our
+  `20260711120000_add_custom_signing_domain` (additive). → Deploy is a FORWARD upgrade (not a
+  downgrade); both pending migrations are safe `ADD COLUMN` ops. Checksums match (fork mirrors upstream).
+- `docker/start.sh` runs `npx prisma migrate deploy` on boot → recreate auto-applies the migrations.
+
+**Plan:** build `aspendora/documenso:<sha>` on host from a `git archive` tarball (no host git creds,
+native amd64, matches existing `aspendora/documenso-render:local` pattern) → repoint both compose
+image lines → `docker compose up -d` to recreate (auto-migrate on boot) → verify health + signing-link
+domain. Build runs while old containers keep serving; only the recreate is a brief interruption.
+
+**Deploy executed + verified (2026-07-11):**
+- Built `aspendora/documenso:8c9171ae3` (2.67GB) on host from git-archive of the pushed branch.
+- Backed up both DBs → `/opt/backups/documenso-predeploy-20260711-212135/` (documenso_db 460K,
+  documenso_compliance_db 242K — metadata only; files live in S3/MinIO).
+- Repointed both compose image lines (`documenso/documenso:latest` → `aspendora/documenso:8c9171ae3`);
+  originals saved as `docker-compose.yml.pre-fork-bak` in each service dir.
+- Recreated compliance then MSP. Each auto-ran `migrate deploy` on boot, applying
+  `20260622120000_add_recipient_reminder_count` + `20260711120000_add_custom_signing_domain`.
+  "All migrations have been successfully applied." Both health 200.
+- Verified: `customSigningDomain` column present in both DBs; public `https://sign.aspendora.com` and
+  `https://sign.aspendoracompliance.com` health = 200, root = 302 (login). Cleaned build source.
+- **Feature is dormant** (kept instances separate; each already serves its own domain). It activates
+  when consolidating — set the compliance org's `customSigningDomain` on a single instance.
+
+**Rollback:** `cd /opt/services/<svc> && cp docker-compose.yml.pre-fork-bak docker-compose.yml &&
+docker compose up -d` (stock image ignores the additive columns). DB restore from the predeploy dumps
+if ever needed.
+
+**Branch pushed:** `origin/feat/per-org-custom-signing-domain`. **No PR opened** (per user).
